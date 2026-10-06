@@ -62,8 +62,8 @@ $$F(\alpha) = \begin{bmatrix} b_1(\alpha) - m \\ b_{h_1}(\alpha) \\ \vdots \\ b_
 ## Limitations
 
 - **Natural-parameter continuation stops at folds** (turning points in $m$), which is where branches appear to end in the map. Pseudo-arclength continuation would trace through them.
-- **Multi-start is not proof of completeness.** More branches may exist that no starting guess found. A lighter search finds fewer: an earlier version of this repo searched less and reported only 4. To recheck, set `heavy_check = true` in `make_figures.m` (roughly 5 minutes in Octave).
-- **Ideal model.** Switching is instantaneous, with no dead time or commutation overlap. For a real CSI, the line-current pattern must also satisfy the converter's gating constraints (which depend on the IGBT and switch paramaters), which are outside the limits of the solver.
+- **Multi-start is not proof of completeness.** More branches may exist that no starting guess found. A lighter search finds fewer: `she_sweep`'s default settings (60 starts at every 5th grid point) find 5, feasible only up to m = 0.97. To recheck, set `heavy_check = true` in `make_figures.m` (roughly 5 minutes in Octave).
+- **Ideal model.** Switching is instantaneous, with no dead time or commutation overlap. For a real CSI, the line-current pattern must also satisfy the converter's gating constraints (exactly one upper and one lower switch conducting at every instant, so the DC-link current always has a path). Those are outside the scope of this solver.
 - **Possible next steps:** optimise the remaining harmonics (minimise the weighted THD) rather than just eliminate a set, and maybe add pseudo-arclength continuation.
 
 ## How to run
@@ -76,7 +76,7 @@ H = [5 7 11 13 17];                                 % harmonics to eliminate
 [alpha, info] = she_solve(0.6, H, [10 20 30 40 50 60]*pi/180);
 alpha_deg = alpha * 180/pi
 
-branches = she_sweep(0.02:0.01:1.27, H);            % map the solution branches
+branches = she_sweep(0.02:0.01:1.27, H, 100, 3);   % the search behind the results above (~1.5 min in Octave)
 ```
 
 ```matlab
@@ -100,7 +100,7 @@ cd tests; run_tests                 % 9 tests
 ## Changes from v1
 
 - **Fixed:** the v1 README called `SHE_nonlinear_system_with_jacobian`, but MATLAB looks functions up by *file* name (`SHE_Solver.m`), so the example failed with "Undefined function". `SHE_Solver` now has a matching name, and the example uses the new API.
-- **Fixed:** the function was named "with_jacobian" but was missing the main Jacobian.m. v2 has an analytic one which I forgot to upload the last time.
+- **Fixed:** the function was named "with_jacobian", but the repo had no Jacobian. v2 adds an analytic one (`she_jacobian.m`), checked against finite differences.
 - **Added:** a toolbox-free solver, feasibility and pulse-width checks, the branch map, THD ranking, FFT validation and tests.
 
 ## Context
